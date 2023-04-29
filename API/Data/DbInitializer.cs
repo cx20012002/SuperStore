@@ -1,12 +1,34 @@
 using API.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Data;
 
 public class DbInitializer
 {
     // create a method with data to seed the database
-    public static void SeedData(StoreContext context)
+    public static async Task SeedData(StoreContext context, UserManager<User> userManager)
     {
+        if (!userManager.Users.Any())
+        {
+            var user = new User
+            {
+                UserName = "bob",
+                Email = "bob@test.com"
+            };
+
+            await userManager.CreateAsync(user, "Pa$$w0rd");
+            await userManager.AddToRoleAsync(user, "Member");
+
+            var admin = new User
+            {
+                UserName = "admin",
+                Email = "admin@test.com"
+            };
+
+            await userManager.CreateAsync(admin, "Pa$$w0rd");
+            await userManager.AddToRolesAsync(admin, new[] {"Admin", "Member"});
+        }
+
         // check if there are any products in the database
         if (!context.Products.Any())
         {
@@ -210,13 +232,13 @@ public class DbInitializer
                     QuantityInStock = 100
                 }
             };
-            
+
             foreach (var item in products)
             {
                 context.Products.Add(item);
             }
-            
-            context.SaveChangesAsync();
+
+            await context.SaveChangesAsync();
         }
     }
 }
